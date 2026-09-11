@@ -78,20 +78,26 @@ export const evaluateJobUrl = createServerFn({ method: "POST" })
       !!(embedded && (embedded.title || embedded.description)) ||
       looksLikeJob(combined, preview.title, preview.finalUrl || data.url);
 
-    if (!isJob) {
+    // Even when the page is not obviously a posting, parse and score whatever
+    // readable content exists — the user asked for this link on purpose.
+    const readable = combined.replace(/\s+/g, " ").trim();
+    if (!isJob && readable.length < 200) {
       return {
         preview,
-        isJob: false as const,
-        job: null,
-        evaluation: null,
+        isJob: false as boolean,
+        job: null as ParsedJob | null,
+        evaluation: null as Awaited<
+          ReturnType<typeof evaluateFit>
+        > | null,
         partial: false,
         message:
-          "That link does not look like a job posting — here is a preview of the page instead.",
+          "There was not enough readable content on that page to analyse. Paste the description below and try again.",
       };
     }
 
     const job = await extractJob(data.url, combined, preview, jsonLd, embedded);
     const partial = job.partial && !pasted;
+
 
     const { getSupabaseAdmin } = await import("@/integrations/supabase/client.server");
     const db = getSupabaseAdmin();
@@ -108,14 +114,17 @@ export const evaluateJobUrl = createServerFn({ method: "POST" })
     const evaluation = await evaluateFit(job, profile);
     return {
       preview,
-      isJob: true as const,
-      job,
-      evaluation,
+      isJob: isJob as boolean,
+      job: job as ParsedJob | null,
+      evaluation: evaluation as Awaited<ReturnType<typeof evaluateFit>> | null,
       partial,
-      message: partial
-        ? "This posting is only partly readable — the site keeps the full description behind a login. Paste the job description below for a complete analysis."
-        : evaluation.aiUsed
-          ? ""
-          : "AI provider unavailable — showing a keyword-based analysis.",
+      message: !isJob
+        ? "This link does not look like a standard job posting, so we analysed the page content as-is. Paste the real description below for a sharper result."
+        : partial
+          ? "This posting is only partly readable — the site keeps the full description behind a login. Paste the job description below for a complete analysis."
+          : evaluation.aiUsed
+            ? ""
+            : "AI provider unavailable — showing a keyword-based analysis.",
     };
+
   });
