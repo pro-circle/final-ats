@@ -95,16 +95,19 @@ function SignupPage() {
             <h1 className="font-display text-2xl font-extrabold">Create your account</h1>
           </div>
 
-          <div className="mb-5 grid grid-cols-2 gap-2 rounded-lg border border-border bg-surface p-1 text-xs font-semibold">
+          <div className="relative mb-5 flex rounded-lg border border-border bg-surface p-1 text-xs font-semibold">
+            <div
+              className={`absolute left-1 top-1 bottom-1 w-[calc(50%-0.25rem)] rounded-md bg-brand shadow-sm ring-1 ring-brand transition-transform duration-300 ease-out ${
+                role === "candidate" ? "translate-x-[calc(100%+0.5rem)]" : "translate-x-0"
+              }`}
+            />
             {(["employer", "candidate"] as const).map((r) => (
               <button
                 type="button"
                 key={r}
                 onClick={() => setRole(r)}
-                className={`rounded-md py-2 capitalize transition-colors ${
-                  role === r
-                    ? "bg-brand text-brand-foreground shadow-sm ring-1 ring-brand"
-                    : "text-muted-foreground hover:bg-surface"
+                className={`relative z-10 flex-1 rounded-md py-2 capitalize transition-colors duration-300 ${
+                  role === r ? "text-brand-foreground" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 I'm a {r === "employer" ? "recruiter" : "candidate"}
