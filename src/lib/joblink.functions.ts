@@ -114,14 +114,17 @@ export const evaluateJobUrl = createServerFn({ method: "POST" })
     const evaluation = await evaluateFit(job, profile);
     return {
       preview,
-      isJob: true as const,
-      job,
-      evaluation,
+      isJob: isJob as boolean,
+      job: job as ParsedJob | null,
+      evaluation: evaluation as Awaited<ReturnType<typeof evaluateFit>> | null,
       partial,
-      message: partial
-        ? "This posting is only partly readable — the site keeps the full description behind a login. Paste the job description below for a complete analysis."
-        : evaluation.aiUsed
-          ? ""
-          : "AI provider unavailable — showing a keyword-based analysis.",
+      message: !isJob
+        ? "This link does not look like a standard job posting, so we analysed the page content as-is. Paste the real description below for a sharper result."
+        : partial
+          ? "This posting is only partly readable — the site keeps the full description behind a login. Paste the job description below for a complete analysis."
+          : evaluation.aiUsed
+            ? ""
+            : "AI provider unavailable — showing a keyword-based analysis.",
     };
+
   });
