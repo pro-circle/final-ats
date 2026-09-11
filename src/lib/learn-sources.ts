@@ -102,3 +102,56 @@ export function learnSources(question: string, context = ""): LearnSource[] {
     },
   ];
 }
+
+/** Research links about the hiring company (all real search entry points). */
+export function companySources(company: string): LearnSource[] {
+  const c = encodeURIComponent(company.trim());
+  if (!company.trim()) return [];
+  return [
+    { label: "Google News", url: `https://news.google.com/search?q=${c}`, kind: "docs" },
+    {
+      label: "Glassdoor reviews",
+      url: `https://www.glassdoor.com/Search/results.htm?keyword=${c}`,
+      kind: "docs",
+    },
+    {
+      label: "LinkedIn company",
+      url: `https://www.linkedin.com/search/results/companies/?keywords=${c}`,
+      kind: "docs",
+    },
+    {
+      label: "YouTube: culture & interviews",
+      url: `https://www.youtube.com/results?search_query=${encodeURIComponent(`${company} interview experience culture`)}`,
+      kind: "video",
+    },
+  ];
+}
+
+/** Interview-prep links for a specific role (optionally at a company). */
+export function roleSources(role: string, company = ""): LearnSource[] {
+  const r = role.trim() || "software engineer";
+  const withCo = company.trim() ? `${company} ${r}` : r;
+  return [
+    {
+      label: "YouTube: mock interview",
+      url: `https://www.youtube.com/results?search_query=${encodeURIComponent(`${withCo} interview questions mock`)}`,
+      kind: "video",
+    },
+    {
+      label: "Glassdoor interview questions",
+      url: `https://www.glassdoor.com/Interview/index.htm?keyword=${encodeURIComponent(withCo)}`,
+      kind: "practice",
+    },
+    {
+      label: "LeetCode practice",
+      url: `https://leetcode.com/problemset/?search=${encodeURIComponent(r)}`,
+      kind: "practice",
+    },
+    {
+      label: "Coursera courses",
+      url: `https://www.coursera.org/search?query=${encodeURIComponent(r)}`,
+      kind: "docs",
+    },
+  ];
+}
+

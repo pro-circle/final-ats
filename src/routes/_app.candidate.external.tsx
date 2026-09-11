@@ -15,8 +15,12 @@ import {
   Mic,
   Building2,
   GraduationCap,
+  Youtube,
+  BookOpen,
 } from "lucide-react";
 import { toast } from "sonner";
+import { learnSources, companySources, roleSources } from "@/lib/learn-sources";
+
 
 
 export const Route = createFileRoute("/_app/candidate/external")({
@@ -112,6 +116,8 @@ function ExternalPrep() {
   const ev = result?.evaluation ?? null;
   const job = result?.job ?? null;
   const preview = result?.preview ?? null;
+  const skills: string[] = job?.tags?.length ? job.tags.slice(0, 12) : [];
+
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -243,6 +249,141 @@ function ExternalPrep() {
           </div>
         </SectionCard>
       )}
+
+      {job && (
+        <div className="mb-6 grid gap-4 sm:grid-cols-3">
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              <Building2 className="size-3.5" /> Company
+            </div>
+            <div className="font-display text-lg font-extrabold">
+              {job.company || preview?.siteName || "Not stated"}
+            </div>
+            {job.location && (
+              <div className="mt-1 text-xs text-muted-foreground">{job.location}</div>
+            )}
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              <Target className="size-3.5" /> Role
+            </div>
+            <div className="font-display text-lg font-extrabold">
+              {job.title || "Untitled role"}
+            </div>
+            <div className="mt-1 text-xs text-muted-foreground">
+              {[job.type, job.salary].filter(Boolean).join(" · ") || "Details not stated"}
+            </div>
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <div className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              <Sparkles className="size-3.5" /> Key skills
+            </div>
+            {skills.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {skills.map((s) => (
+                  <span
+                    key={s}
+                    className="rounded bg-accent/10 px-2 py-0.5 text-[11px] font-semibold text-accent ring-1 ring-accent/25"
+                  >
+                    {s}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                No specific skills detected in the posting.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {job && (
+        <SectionCard title="Preparation sites & materials" className="mb-6">
+          <div className="grid gap-5 p-6 md:grid-cols-3">
+            <div>
+              <div className="mb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Research {job.company || "the company"}
+              </div>
+              <ul className="space-y-1.5">
+                {companySources(job.company || preview?.siteName || "").map((s) => (
+                  <li key={s.url}>
+                    <a
+                      href={s.url}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent hover:underline"
+                    >
+                      {s.kind === "video" ? (
+                        <Youtube className="size-3.5" />
+                      ) : (
+                        <BookOpen className="size-3.5" />
+                      )}
+                      {s.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <div className="mb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Interview prep for this role
+              </div>
+              <ul className="space-y-1.5">
+                {roleSources(job.title, job.company).map((s) => (
+                  <li key={s.url}>
+                    <a
+                      href={s.url}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent hover:underline"
+                    >
+                      {s.kind === "video" ? (
+                        <Youtube className="size-3.5" />
+                      ) : (
+                        <BookOpen className="size-3.5" />
+                      )}
+                      {s.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <div className="mb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Skill deep-dives
+              </div>
+              {skills.length > 0 ? (
+                <ul className="space-y-2">
+                  {skills.slice(0, 5).map((skill) => (
+                    <li key={skill}>
+                      <div className="text-xs font-semibold">{skill}</div>
+                      <div className="flex flex-wrap gap-x-3 gap-y-1">
+                        {learnSources(skill).map((s) => (
+                          <a
+                            key={s.url}
+                            href={s.url}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            className="text-[11px] text-muted-foreground hover:text-accent hover:underline"
+                          >
+                            {s.label}
+                          </a>
+                        ))}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Paste the description to detect skills and get targeted materials.
+                </p>
+              )}
+            </div>
+          </div>
+        </SectionCard>
+      )}
+
 
       {job && (
         <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-accent/30 bg-accent/5 p-5 sm:flex-row sm:items-center sm:justify-between">
