@@ -15,8 +15,12 @@ import {
   Mic,
   Building2,
   GraduationCap,
+  Youtube,
+  BookOpen,
 } from "lucide-react";
 import { toast } from "sonner";
+import { learnSources, companySources, roleSources } from "@/lib/learn-sources";
+
 
 
 export const Route = createFileRoute("/_app/candidate/external")({
