@@ -3,15 +3,26 @@ import { useState } from "react";
 import { PageHeader } from "@/routes/_app";
 import { SectionCard } from "@/components/dashboard/primitives";
 import { useDataset } from "@/hooks/use-dataset";
-import { Sparkles, Zap, MapPin, Link2, Loader2 } from "lucide-react";
+import { Sparkles, Zap, MapPin, Link2, Loader2, Search, ExternalLink, Globe2 } from "lucide-react";
 import { toast } from "sonner";
 import { evaluateJobUrl } from "@/lib/joblink.functions";
 import { useAutoApplyAgent } from "@/hooks/use-auto-apply";
+import { searchLiveJobs } from "@/lib/jobsources.functions";
+import type { ExternalJob } from "@/lib/jobsources.server";
 
 type EvalResult = Awaited<ReturnType<typeof evaluateJobUrl>>;
 
 export const Route = createFileRoute("/_app/candidate/jobs")({
-  head: () => ({ meta: [{ title: "Job Matches · ATS Engine" }] }),
+  head: () => ({
+    meta: [
+      { title: "Job Matches & Web Search · ATS Engine" },
+      { name: "description", content: "Search live web jobs and review roles matched to your ATS Engine profile." },
+      { property: "og:title", content: "Job Matches & Web Search · ATS Engine" },
+      { property: "og:description", content: "Search live web jobs and review roles matched to your ATS Engine profile." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: CandidateMatches,
 });
 
@@ -22,6 +33,24 @@ function CandidateMatches() {
   const [jobUrl, setJobUrl] = useState("");
   const [evaluating, setEvaluating] = useState(false);
   const [result, setResult] = useState<EvalResult | null>(null);
+  const [webQuery, setWebQuery] = useState("");
+  const [webJobs, setWebJobs] = useState<ExternalJob[]>([]);
+  const [searchingWeb, setSearchingWeb] = useState(false);
+  const [webSearched, setWebSearched] = useState(false);
+
+  async function handleWebSearch() {
+    setSearchingWeb(true);
+    try {
+      const res = await searchLiveJobs({ data: { query: webQuery.trim(), limit: 24 } });
+      setWebJobs(res.jobs);
+      setWebSearched(true);
+      if (!res.jobs.length) toast.message("No live web jobs matched that search");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not search live jobs");
+    } finally {
+      setSearchingWeb(false);
+    }
+  }
 
   async function handleEvaluate() {
     if (!jobUrl.trim()) return;
@@ -65,6 +94,74 @@ function CandidateMatches() {
           </label>
         }
       />
+
+      <section className="mb-6 border-y border-border bg-surface/40 px-4 py-5 sm:px-5">
+        <div className="mb-3 flex items-center gap-2">
+          <Globe2 className="size-4 text-accent" />
+          <h2 className="font-display text-sm font-bold">Search live jobs on the web</h2>
+        </div>
+        <form
+          className="flex flex-col gap-2 sm:flex-row"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void handleWebSearch();
+          }}
+        >
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              value={webQuery}
+              onChange={(event) => setWebQuery(event.target.value)}
+              placeholder="Product designer, frontend engineer…"
+              aria-label="Search live web jobs"
+              className="w-full rounded-md border border-border bg-card py-2.5 pl-10 pr-3 text-sm outline-none focus:ring-2 focus:ring-accent/25"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={searchingWeb}
+            className="inline-flex items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 text-xs font-semibold text-accent-foreground disabled:opacity-50"
+          >
+            {searchingWeb ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
+            {searchingWeb ? "Searching…" : "Search web"}
+          </button>
+        </form>
+
+        {webSearched && (
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            {webJobs.map((job) => (
+              <article key={job.id} className="rounded-lg border border-border bg-card p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="truncate text-sm font-bold">{job.title}</h3>
+                    <p className="truncate text-xs text-muted-foreground">{job.company}</p>
+                  </div>
+                  <span className="shrink-0 rounded bg-surface px-2 py-1 text-[10px] font-semibold text-muted-foreground">
+                    {job.source}
+                  </span>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
+                  <span className="inline-flex items-center gap-1"><MapPin className="size-3" />{job.location || "Not specified"}</span>
+                  <span>{job.type}</span>
+                  <span>{new Date(job.postedAt).toLocaleDateString()}</span>
+                </div>
+                <p className="mt-3 line-clamp-3 text-xs leading-relaxed text-foreground/75">{job.description}</p>
+                <a
+                  href={job.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-accent hover:underline"
+                >
+                  View application <ExternalLink className="size-3.5" />
+                </a>
+              </article>
+            ))}
+            {webJobs.length === 0 && (
+              <p className="py-4 text-xs text-muted-foreground">Try a broader title or keyword.</p>
+            )}
+          </div>
+        )}
+      </section>
 
       <SectionCard
         className="mb-6"

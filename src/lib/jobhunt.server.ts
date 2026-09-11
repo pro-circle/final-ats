@@ -14,6 +14,7 @@ import {
   DEFAULT_HUNT_SETTINGS,
   type DraftedApplication,
   type HuntLogEntry,
+  type HuntDecisionResult,
   type HuntPassResult,
   type HuntProposal,
   type HuntSettings,
@@ -79,6 +80,7 @@ function rowToProposal(r: any): HuntProposal {
     reason: r.reason ?? "",
     status: (r.status ?? "pending") as HuntProposal["status"],
     createdAt: r.created_at ?? "",
+    sourceUrl: /^https?:\/\//i.test(String(r.job_id ?? "")) ? r.job_id : undefined,
   };
 }
 
@@ -396,7 +398,7 @@ export async function runPass(): Promise<HuntPassResult> {
       const id = `PRP-${Date.now().toString(36).toUpperCase()}-${result.proposed.length}`;
       const proposal: HuntProposal = {
         id,
-        jobId: job.id,
+        jobId: job.external && job.url ? job.url : job.id,
         jobTitle: job.title,
         company: job.department || "This company",
         location: job.location ?? "",
@@ -437,7 +439,7 @@ export async function runPass(): Promise<HuntPassResult> {
 export async function decideProposal(
   proposalId: string,
   decision: "approve" | "deny",
-): Promise<{ ok: boolean; message: string }> {
+): Promise<HuntDecisionResult> {
   const { userId, db } = await huntCtx();
   if (!db) return { ok: false, message: "Backend not configured." };
 
@@ -464,6 +466,24 @@ export async function decideProposal(
       createdAt: new Date().toISOString(),
     });
     return { ok: true, message: "Dismissed — the agent will not apply." };
+  }
+
+  if (/^https?:\/\//i.test(String(p.job_id ?? ""))) {
+    await db.from("job_hunt_proposals").update({ status: "applied" }).eq("id", proposalId);
+    await writeLog(db, userId, {
+      id: `LOG-${Date.now().toString(36)}`,
+      jobTitle: p.job_title ?? "",
+      company: p.company ?? "",
+      matchScore: p.match_score ?? 0,
+      status: "skipped",
+      reason: "Opened the employer application page — submission is not yet confirmed",
+      createdAt: new Date().toISOString(),
+    });
+    return {
+      ok: true,
+      message: "Opening the employer’s application page. Submit it there to complete the application.",
+      actionUrl: String(p.job_id),
+    };
   }
 
   const { data: job } = await db.from("jobs").select("*").eq("id", p.job_id).maybeSingle();
