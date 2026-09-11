@@ -116,6 +116,8 @@ function ExternalPrep() {
   const ev = result?.evaluation ?? null;
   const job = result?.job ?? null;
   const preview = result?.preview ?? null;
+  const skills: string[] = job?.tags?.length ? job.tags.slice(0, 12) : [];
+
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
