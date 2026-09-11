@@ -218,7 +218,7 @@ function Assistant() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={
-                  cloud.transcribing
+                  voice.transcribing
                     ? "Transcribing…"
                     : voice.listening
                       ? "Listening…"
