@@ -5,8 +5,8 @@ import { useState, useRef, useEffect } from "react";
 import { PageHeader } from "@/routes/_app";
 import { SectionCard } from "@/components/dashboard/primitives";
 import { Mic, Send, Sparkles, MessagesSquare, Square } from "lucide-react";
-import { useSpeechInput } from "@/hooks/use-speech-input";
-import { useVoiceStream } from "@/hooks/use-voice-stream";
+import { useVoiceInput } from "@/hooks/use-voice-input";
+
 
 import { usePrefs } from "@/hooks/use-prefs";
 import { toast } from "sonner";
@@ -29,24 +29,8 @@ function Assistant() {
   const [input, setInput] = useState("");
   const { floatingAssistant, setFloatingAssistant } = usePrefs();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const speech = useSpeechInput();
-  const cloud = useVoiceStream();
-  // On-device recognition when the browser has it, Groq Whisper streaming
-  // (short WAV windows) everywhere else — Safari, Firefox, in-app browsers.
-  const useCloudVoice = !speech.supported;
-  const voice = {
-    supported: speech.supported || cloud.supported,
-    listening: useCloudVoice ? cloud.listening : speech.listening,
-    transcript: useCloudVoice ? cloud.transcript : speech.transcript,
-    interim: useCloudVoice ? "" : speech.interim,
-    error: useCloudVoice ? cloud.error : speech.error,
-    start: () => (useCloudVoice ? void cloud.start() : void speech.start()),
-    stop: () => (useCloudVoice ? void cloud.stop() : speech.stop()),
-    reset: () => {
-      cloud.reset();
-      speech.reset();
-    },
-  };
+  const voice = useVoiceInput();
+
 
 
   const { messages, setMessages, sendMessage, status } = useChat({
@@ -234,7 +218,7 @@ function Assistant() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={
-                  cloud.transcribing
+                  voice.transcribing
                     ? "Transcribing…"
                     : voice.listening
                       ? "Listening…"
