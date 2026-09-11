@@ -114,7 +114,10 @@ export function useJobHunt() {
       setProposals((prev) => prev.filter((p) => p.id !== id));
       try {
         const res = await decideJobHuntProposal({ data: { id, decision } });
-        if (res.ok) toast.success(res.message);
+        if (res.ok) {
+          toast.success(res.message);
+          if (res.actionUrl) window.open(res.actionUrl, "_blank", "noopener,noreferrer");
+        }
         else toast.error(res.message);
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Could not save");

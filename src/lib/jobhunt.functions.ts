@@ -1,6 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import type { DraftedApplication, HuntPassResult, HuntSettings, HuntState } from "./jobhunt.types";
+import type {
+  DraftedApplication,
+  HuntDecisionResult,
+  HuntPassResult,
+  HuntSettings,
+  HuntState,
+} from "./jobhunt.types";
 
 export const getJobHunt = createServerFn({ method: "GET" }).handler(
   async (): Promise<HuntState> => {
@@ -49,7 +55,7 @@ export const decideJobHuntProposal = createServerFn({ method: "POST" })
       })
       .parse(d),
   )
-  .handler(async ({ data }): Promise<{ ok: boolean; message: string }> => {
+  .handler(async ({ data }): Promise<HuntDecisionResult> => {
     const { decideProposal } = await import("./jobhunt.server");
     return decideProposal(data.id, data.decision);
   });

@@ -16,6 +16,8 @@ import {
   Shield,
   Sparkles,
   X,
+  ExternalLink,
+  ListChecks,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -76,6 +78,32 @@ function JobHuntPage() {
           applications.
         </p>
       )}
+
+      <section className="mb-6 border-y border-border bg-surface/40 px-4 py-5 sm:px-6">
+        <div className="mb-3 flex items-center gap-2">
+          <ListChecks className="size-4 text-accent" />
+          <h2 className="font-display text-sm font-bold">Set up automatic job hunting</h2>
+        </div>
+        <ol className="grid gap-3 text-xs sm:grid-cols-2 lg:grid-cols-5">
+          {[
+            "Complete your resume and profile",
+            "Add target titles and locations",
+            "Choose Ask me first or Apply for me",
+            "Set the match score and daily limit",
+            "Switch the agent on and keep this page open",
+          ].map((step, index) => (
+            <li key={step} className="flex gap-2">
+              <span className="font-mono font-bold text-accent">{index + 1}.</span>
+              <span>{step}</span>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-4 text-xs text-muted-foreground">
+          Jobs inside ATS Engine can be submitted automatically. For jobs found on the web, the
+          agent scores and prepares them, then opens the employer’s page for your final review and
+          submission.
+        </p>
+      </section>
 
       {/* Control panel */}
       <div className="mb-6 overflow-hidden rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/10 via-card to-card p-4 sm:p-6">
@@ -273,7 +301,12 @@ function JobHuntPage() {
                       onClick={() => void decide(p.id, "approve")}
                       className="inline-flex items-center gap-1 rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-accent-foreground hover:opacity-90"
                     >
-                      <Check className="size-3.5" /> Apply now
+                      {p.sourceUrl ? (
+                        <ExternalLink className="size-3.5" />
+                      ) : (
+                        <Check className="size-3.5" />
+                      )}
+                      {p.sourceUrl ? "Open application" : "Apply now"}
                     </button>
                     <button
                       onClick={() => void decide(p.id, "deny")}

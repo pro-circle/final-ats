@@ -45,6 +45,15 @@ export type HuntProposal = {
   reason: string;
   status: "pending" | "applied" | "denied";
   createdAt: string;
+  /** Employer application page for jobs found on the public web. */
+  sourceUrl?: string;
+};
+
+export type HuntDecisionResult = {
+  ok: boolean;
+  message: string;
+  /** Present when the candidate must finish the application on an employer site. */
+  actionUrl?: string;
 };
 
 export type HuntLogEntry = {
