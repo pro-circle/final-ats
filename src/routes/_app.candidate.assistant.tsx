@@ -29,24 +29,8 @@ function Assistant() {
   const [input, setInput] = useState("");
   const { floatingAssistant, setFloatingAssistant } = usePrefs();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const speech = useSpeechInput();
-  const cloud = useVoiceStream();
-  // On-device recognition when the browser has it, Groq Whisper streaming
-  // (short WAV windows) everywhere else — Safari, Firefox, in-app browsers.
-  const useCloudVoice = !speech.supported;
-  const voice = {
-    supported: speech.supported || cloud.supported,
-    listening: useCloudVoice ? cloud.listening : speech.listening,
-    transcript: useCloudVoice ? cloud.transcript : speech.transcript,
-    interim: useCloudVoice ? "" : speech.interim,
-    error: useCloudVoice ? cloud.error : speech.error,
-    start: () => (useCloudVoice ? void cloud.start() : void speech.start()),
-    stop: () => (useCloudVoice ? void cloud.stop() : speech.stop()),
-    reset: () => {
-      cloud.reset();
-      speech.reset();
-    },
-  };
+  const voice = useVoiceInput();
+
 
 
   const { messages, setMessages, sendMessage, status } = useChat({
