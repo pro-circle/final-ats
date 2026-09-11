@@ -196,15 +196,37 @@ export function FloatingAssistant() {
               const t = input.trim();
               if (!t || busy) return;
               setInput("");
+              voice.reset();
               void sendMessage({ text: t });
             }}
             className="flex items-center gap-2 border-t border-border p-3"
           >
+            <button
+              type="button"
+              onClick={() => (voice.listening ? voice.stop() : voice.start())}
+              disabled={!voice.supported}
+              aria-pressed={voice.listening}
+              aria-label={voice.listening ? "Stop voice input" : "Start voice input"}
+              title={voice.supported ? "Voice input" : "Voice input not supported here"}
+              className={`grid size-8 shrink-0 place-items-center rounded-md border transition-colors disabled:opacity-40 ${
+                voice.listening
+                  ? "animate-pulse border-accent bg-accent text-accent-foreground"
+                  : "border-border bg-surface text-foreground/70 hover:text-foreground"
+              }`}
+            >
+              {voice.listening ? <Square className="size-3" /> : <Mic className="size-3.5" />}
+            </button>
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask anything…"
-              className="flex-1 rounded-md border border-border bg-surface px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-accent/20"
+              placeholder={
+                voice.transcribing
+                  ? "Transcribing…"
+                  : voice.listening
+                    ? "Listening…"
+                    : "Ask anything…"
+              }
+              className="min-w-0 flex-1 rounded-md border border-border bg-surface px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-accent/20"
             />
             <button
               type="submit"
