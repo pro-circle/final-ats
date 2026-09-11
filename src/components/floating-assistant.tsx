@@ -39,6 +39,19 @@ export function FloatingAssistant() {
   const busy = status === "submitted" || status === "streaming";
   useChatMemory(messages, setMessages, status === "streaming");
 
+  const voice = useVoiceInput();
+
+  // Stream recognized speech straight into the composer.
+  useEffect(() => {
+    if (!voice.listening && !voice.transcript) return;
+    const live = [voice.transcript, voice.interim].filter(Boolean).join(" ");
+    if (live) setInput(live);
+  }, [voice.transcript, voice.interim, voice.listening]);
+
+  useEffect(() => {
+    if (voice.error) toast.error(voice.error);
+  }, [voice.error]);
+
   // Restore saved position on mount and keep it inside the viewport.
   useEffect(() => {
     if (typeof window === "undefined") return;
