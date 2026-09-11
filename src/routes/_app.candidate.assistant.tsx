@@ -5,8 +5,8 @@ import { useState, useRef, useEffect } from "react";
 import { PageHeader } from "@/routes/_app";
 import { SectionCard } from "@/components/dashboard/primitives";
 import { Mic, Send, Sparkles, MessagesSquare, Square } from "lucide-react";
-import { useSpeechInput } from "@/hooks/use-speech-input";
-import { useVoiceStream } from "@/hooks/use-voice-stream";
+import { useVoiceInput } from "@/hooks/use-voice-input";
+
 
 import { usePrefs } from "@/hooks/use-prefs";
 import { toast } from "sonner";
