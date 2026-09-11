@@ -30,3 +30,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local test-only env (never committed)
+.env
+.env.*
+!.env.example
