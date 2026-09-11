@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { MessagesSquare, X, Send, Sparkles } from "lucide-react";
+import { MessagesSquare, X, Send, Sparkles, Mic, Square } from "lucide-react";
+import { toast } from "sonner";
 import { AiMarkdown } from "@/components/ai-markdown";
 import { useChatMemory } from "@/hooks/use-chat-memory";
+import { useVoiceInput } from "@/hooks/use-voice-input";
 
 const POSITION_KEY = "ats-engine:floating-assistant-position";
 const BUTTON_SIZE = 56;
