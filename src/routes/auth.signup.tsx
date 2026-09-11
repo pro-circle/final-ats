@@ -68,7 +68,7 @@ function SignupPage() {
         </a>
         <div className="relative z-10 max-w-md space-y-6">
           <h2 className="font-display text-4xl font-extrabold leading-tight">
-            Start your <span className="text-accent">14-day trial</span>. No card required.
+            Unmatched <span className="text-accent">Speed</span> and Semantic parsing.
           </h2>
           <ul className="space-y-3 text-sm text-background/80">
             {[
@@ -102,7 +102,9 @@ function SignupPage() {
                 key={r}
                 onClick={() => setRole(r)}
                 className={`rounded-md py-2 capitalize transition-colors ${
-                  role === r ? "bg-card shadow-sm ring-1 ring-border" : "text-muted-foreground"
+                  role === r
+                    ? "bg-brand text-brand-foreground shadow-sm ring-1 ring-brand"
+                    : "text-muted-foreground hover:bg-surface"
                 }`}
               >
                 I'm a {r === "employer" ? "recruiter" : "candidate"}
