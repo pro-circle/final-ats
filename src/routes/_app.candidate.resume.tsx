@@ -27,6 +27,7 @@ function isResumeEmpty(c: ResumeContent) {
     !c.email.trim() &&
     c.experience.length === 0 &&
     c.education.length === 0 &&
+    (c.projects?.length ?? 0) === 0 &&
     c.skills.length === 0
   );
 }
@@ -223,6 +224,38 @@ function ResumeStudio() {
                 }
               />
               <Text
+                label="Projects (one per line: Name @ Role | Dates | Link | bullet; bullet)"
+                area
+                value={(content.projects ?? [])
+                  .map(
+                    (p) =>
+                      `${p.name}${p.role ? ` @ ${p.role}` : ""} | ${p.dates} | ${p.link} | ${(p.bullets ?? []).join("; ")}`,
+                  )
+                  .join("\n")}
+                onChange={(v) =>
+                  setContent({
+                    ...content,
+                    projects: v
+                      .split("\n")
+                      .filter((l) => l.trim())
+                      .map((line) => {
+                        const [head = "", dates = "", link = "", bullets = ""] = line.split("|");
+                        const [name = "", role = ""] = head.split("@");
+                        return {
+                          name: name.trim(),
+                          role: role.trim(),
+                          dates: dates.trim(),
+                          link: link.trim(),
+                          bullets: bullets
+                            .split(";")
+                            .map((b) => b.trim())
+                            .filter(Boolean),
+                        };
+                      }),
+                  })
+                }
+              />
+              <Text
                 label="Skills (comma separated)"
                 value={content.skills.join(", ")}
                 onChange={(v) =>
@@ -290,33 +323,72 @@ function ResumeStudio() {
               </div>
             }
           >
-            <div className="space-y-4 p-8 font-sans text-sm">
+            <div className="space-y-4 overflow-hidden p-6 font-sans text-sm sm:p-8">
               <div>
-                <div className="font-display text-2xl font-extrabold">
+                <div className="break-words font-display text-2xl font-extrabold">
                   {content.fullName || "Your name"}
                 </div>
-                <div className="text-xs text-muted-foreground">
+                <div className="break-words text-xs text-muted-foreground">
                   {[content.headline, content.location, content.email].filter(Boolean).join(" · ") ||
                     "Add your headline and location"}
                 </div>
               </div>
               {content.summary && (
                 <Block title="Summary">
-                  <p className="mt-1 text-xs text-foreground/80">{content.summary}</p>
+                  <p className="mt-1 whitespace-pre-line break-words text-xs leading-relaxed text-foreground/80">
+                    {content.summary}
+                  </p>
                 </Block>
               )}
               {!!content.experience.length && (
                 <Block title="Experience">
-                  <div className="mt-2 space-y-2">
+                  <div className="mt-2 space-y-3">
                     {content.experience.map((e, i) => (
                       <div key={i}>
-                        <div className="text-xs font-semibold">
-                          {[e.title, e.company].filter(Boolean).join(" · ")}
+                        <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+                          <div className="min-w-0 break-words text-xs font-semibold">
+                            {[e.title, e.company].filter(Boolean).join(" · ")}
+                          </div>
+                          <div className="shrink-0 text-[10px] text-muted-foreground">{e.dates}</div>
                         </div>
-                        <div className="text-[10px] text-muted-foreground">{e.dates}</div>
-                        <ul className="mt-1 list-disc space-y-0.5 pl-4 text-[11px] text-foreground/80">
+                        <ul className="mt-1 list-disc space-y-0.5 pl-4 text-[11px] leading-relaxed text-foreground/80">
                           {(e.bullets ?? []).map((b, j) => (
-                            <li key={j}>{b}</li>
+                            <li key={j} className="break-words">
+                              {b}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                </Block>
+              )}
+              {!!content.projects?.length && (
+                <Block title="Projects">
+                  <div className="mt-2 space-y-3">
+                    {content.projects.map((p, i) => (
+                      <div key={i}>
+                        <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+                          <div className="min-w-0 break-words text-xs font-semibold">
+                            {[p.name, p.role].filter(Boolean).join(" · ")}
+                          </div>
+                          <div className="shrink-0 text-[10px] text-muted-foreground">{p.dates}</div>
+                        </div>
+                        {p.link && (
+                          <a
+                            href={p.link}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="block break-all text-[10px] text-brand hover:underline"
+                          >
+                            {p.link}
+                          </a>
+                        )}
+                        <ul className="mt-1 list-disc space-y-0.5 pl-4 text-[11px] leading-relaxed text-foreground/80">
+                          {(p.bullets ?? []).map((b, j) => (
+                            <li key={j} className="break-words">
+                              {b}
+                            </li>
                           ))}
                         </ul>
                       </div>
@@ -328,9 +400,15 @@ function ResumeStudio() {
                 <Block title="Education">
                   <div className="mt-2 space-y-1">
                     {content.education.map((e, i) => (
-                      <div key={i} className="text-xs">
-                        <span className="font-semibold">{e.school}</span> · {e.degree}{" "}
-                        <span className="text-muted-foreground">{e.dates}</span>
+                      <div
+                        key={i}
+                        className="flex flex-wrap items-baseline justify-between gap-x-3 text-xs"
+                      >
+                        <span className="min-w-0 break-words">
+                          <span className="font-semibold">{e.school}</span>
+                          {e.degree ? ` · ${e.degree}` : ""}
+                        </span>
+                        <span className="shrink-0 text-[10px] text-muted-foreground">{e.dates}</span>
                       </div>
                     ))}
                   </div>

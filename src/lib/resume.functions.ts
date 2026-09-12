@@ -9,6 +9,7 @@ export type ResumeContent = {
   summary: string;
   experience: { company: string; title: string; dates: string; bullets: string[] }[];
   education: { school: string; degree: string; dates: string }[];
+  projects: { name: string; role: string; dates: string; link: string; bullets: string[] }[];
   skills: string[];
 };
 
@@ -32,6 +33,7 @@ export const EMPTY_CONTENT: ResumeContent = {
   summary: "",
   experience: [],
   education: [],
+  projects: [],
   skills: [],
 };
 
@@ -61,6 +63,18 @@ const contentSchema = z.object({
       }),
     )
     .max(10)
+    .default([]),
+  projects: z
+    .array(
+      z.object({
+        name: z.string().max(160).default(""),
+        role: z.string().max(160).default(""),
+        dates: z.string().max(80).default(""),
+        link: z.string().max(300).default(""),
+        bullets: z.array(z.string().max(600)).max(12).default([]),
+      }),
+    )
+    .max(20)
     .default([]),
   skills: z.array(z.string().max(60)).max(60).default([]),
 });
@@ -96,6 +110,14 @@ export function renderPlainText(c: ResumeContent): string {
     lines.push("", "EDUCATION");
     for (const e of c.education)
       lines.push(`${[e.degree, e.school].filter(Boolean).join(" — ")} (${e.dates})`);
+  }
+  if (c.projects?.length) {
+    lines.push("", "PROJECTS");
+    for (const p of c.projects) {
+      const head = [p.name, p.role].filter(Boolean).join(" — ");
+      lines.push(`${head}${p.dates ? ` (${p.dates})` : ""}${p.link ? ` · ${p.link}` : ""}`);
+      for (const b of p.bullets ?? []) lines.push(`• ${b}`);
+    }
   }
   if (c.skills.length) lines.push("", "SKILLS", c.skills.join(", "));
   return lines.join("\n");
@@ -144,6 +166,7 @@ async function loadOrCreate(client: NonNullable<Awaited<ReturnType<typeof import
     summary: String(parsed?.summary ?? ""),
     experience: (parsed?.experience as ResumeContent["experience"]) ?? [],
     education: (parsed?.education as ResumeContent["education"]) ?? [],
+    projects: (parsed?.projects as ResumeContent["projects"]) ?? [],
     skills: (parsed?.skills as string[]) ?? (p?.skills as string[]) ?? [],
   };
   const row = {
@@ -202,7 +225,7 @@ export const saveResume = createServerFn({ method: "POST" })
 /** Parses pasted / uploaded resume text into the structured resume. */
 export const importResumeText = createServerFn({ method: "POST" })
   .validator((d: unknown) =>
-    z.object({ text: z.string().min(20).max(60000), fileName: z.string().max(200).default("") }).parse(d),
+    z.object({ text: z.string().min(20).max(120000), fileName: z.string().max(200).default("") }).parse(d),
   )
   .handler(
     async ({ data }): Promise<{ ok: boolean; message: string; resume?: ResumeRecord | null }> => {
@@ -218,9 +241,9 @@ export const importResumeText = createServerFn({ method: "POST" })
         const { text } = await runAgent({
           kind: "agent",
           system:
-            'Extract a resume into strict JSON: {"fullName","headline","location","email","summary","experience":[{"company","title","dates","bullets":[]}],"education":[{"school","degree","dates"}],"skills":[]}. Return ONLY JSON.',
-          prompt: data.text.slice(0, 20000),
-          maxOutputTokens: 2000,
+            'Extract a resume into strict JSON: {"fullName","headline","location","email","summary","experience":[{"company","title","dates","bullets":[]}],"education":[{"school","degree","dates"}],"projects":[{"name","role","dates","link","bullets":[]}],"skills":[]}. Capture EVERY role, project and page of the document — never truncate. Return ONLY JSON.',
+          prompt: data.text.slice(0, 45000),
+          maxOutputTokens: 4000,
         });
         const parsed = jsonFrom(text);
         if (parsed) content = { ...EMPTY_CONTENT, ...(parsed as Partial<ResumeContent>) };
@@ -234,7 +257,7 @@ export const importResumeText = createServerFn({ method: "POST" })
       }
       if (!content.summary) content.summary = data.text.trim().slice(0, 400);
 
-      const plainText = renderPlainText(content) || data.text.slice(0, 20000);
+      const plainText = renderPlainText(content) || data.text.slice(0, 45000);
       const { error } = await client
         .from("resumes")
         .update({
@@ -248,7 +271,7 @@ export const importResumeText = createServerFn({ method: "POST" })
 
       await client
         .from("profiles")
-        .update({ resume_text: data.text.slice(0, 20000), resume_json: content })
+        .update({ resume_text: data.text.slice(0, 45000), resume_json: content })
         .eq("id", userId);
 
       const { data: fresh } = await client
@@ -285,9 +308,9 @@ export const optimizeResume = createServerFn({ method: "POST" })
         const { text } = await runAgent({
           kind: "agent",
           system:
-            'You are an ATS resume auditor. Return ONLY JSON: {"score": 0-100, "insights":[{"title","body","done":false}], "optimized": {"fullName","headline","location","email","summary","experience":[{"company","title","dates","bullets":[]}],"education":[{"school","degree","dates"}],"skills":[]}}. The optimized resume must keep every fact truthful, use strong action verbs and quantified bullets.',
-          prompt: `Current resume JSON:\n${JSON.stringify(current.content).slice(0, 12000)}\n\nPlain text:\n${source.slice(0, 8000)}`,
-          maxOutputTokens: 2600,
+            'You are an ATS resume auditor. Return ONLY JSON: {"score": 0-100, "insights":[{"title","body","done":false}], "optimized": {"fullName","headline","location","email","summary","experience":[{"company","title","dates","bullets":[]}],"education":[{"school","degree","dates"}],"projects":[{"name","role","dates","link","bullets":[]}],"skills":[]}}. Keep all projects. The optimized resume must keep every fact truthful, use strong action verbs and quantified bullets.',
+          prompt: `Current resume JSON:\n${JSON.stringify(current.content).slice(0, 24000)}\n\nPlain text:\n${source.slice(0, 16000)}`,
+          maxOutputTokens: 5000,
         });
         const parsed = jsonFrom(text) as {
           score?: number;
@@ -384,7 +407,7 @@ export const translateResume = createServerFn({ method: "POST" })
         kind: "agent",
         system: `Translate the resume into ${data.language}. Keep the plain-text ATS layout, section headings and bullet markers. Return only the translated resume.`,
         prompt: source.slice(0, 12000),
-        maxOutputTokens: 2600,
+        maxOutputTokens: 5000,
       });
       if (!text.trim()) return { ok: false, message: "Translation came back empty — try again." };
       return { ok: true, message: `Translated to ${data.language}`, text: text.trim() };
