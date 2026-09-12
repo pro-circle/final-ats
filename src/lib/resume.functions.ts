@@ -309,8 +309,8 @@ export const optimizeResume = createServerFn({ method: "POST" })
           kind: "agent",
           system:
             'You are an ATS resume auditor. Return ONLY JSON: {"score": 0-100, "insights":[{"title","body","done":false}], "optimized": {"fullName","headline","location","email","summary","experience":[{"company","title","dates","bullets":[]}],"education":[{"school","degree","dates"}],"projects":[{"name","role","dates","link","bullets":[]}],"skills":[]}}. Keep all projects. The optimized resume must keep every fact truthful, use strong action verbs and quantified bullets.',
-          prompt: `Current resume JSON:\n${JSON.stringify(current.content).slice(0, 12000)}\n\nPlain text:\n${source.slice(0, 8000)}`,
-          maxOutputTokens: 2600,
+          prompt: `Current resume JSON:\n${JSON.stringify(current.content).slice(0, 24000)}\n\nPlain text:\n${source.slice(0, 16000)}`,
+          maxOutputTokens: 5000,
         });
         const parsed = jsonFrom(text) as {
           score?: number;
@@ -407,7 +407,7 @@ export const translateResume = createServerFn({ method: "POST" })
         kind: "agent",
         system: `Translate the resume into ${data.language}. Keep the plain-text ATS layout, section headings and bullet markers. Return only the translated resume.`,
         prompt: source.slice(0, 12000),
-        maxOutputTokens: 2600,
+        maxOutputTokens: 5000,
       });
       if (!text.trim()) return { ok: false, message: "Translation came back empty — try again." };
       return { ok: true, message: `Translated to ${data.language}`, text: text.trim() };
