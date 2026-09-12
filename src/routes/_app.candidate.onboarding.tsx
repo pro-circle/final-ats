@@ -182,13 +182,13 @@ function OnboardingPage() {
         <div>
           <div className="mb-2 flex items-center justify-between">
             <span className="text-xs font-semibold text-foreground/80">
-              Resume (paste text or upload .txt / .md)
+              Resume (paste text or upload PDF / Word / .txt)
             </span>
             <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-border bg-surface px-2.5 py-1 text-[11px] font-semibold hover:bg-card">
-              <Wand2 className="size-3" /> Upload
+              <Wand2 className="size-3" /> {reading || "Upload"}
               <input
                 type="file"
-                accept=".txt,.md,text/plain"
+                accept={RESUME_ACCEPT}
                 onChange={onFile}
                 className="hidden"
               />
