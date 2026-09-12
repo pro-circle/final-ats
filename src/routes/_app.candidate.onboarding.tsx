@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Sparkles, Rocket, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { saveOnboarding } from "@/lib/profile.functions";
+import { extractTextFromFile, RESUME_ACCEPT } from "@/lib/file-text";
 
 export const Route = createFileRoute("/_app/candidate/onboarding")({
   head: () => ({
@@ -33,6 +34,7 @@ function OnboardingPage() {
   const [summary, setSummary] = useState("");
   const [resumeText, setResumeText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [reading, setReading] = useState("");
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
