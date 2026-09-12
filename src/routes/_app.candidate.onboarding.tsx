@@ -36,10 +36,18 @@ function OnboardingPage() {
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
-    const text = await file.text();
-    setResumeText(text);
-    toast.success(`Loaded ${file.name}`);
+    setReading("Opening your file");
+    try {
+      const text = await extractTextFromFile(file, (stage) => setReading(stage));
+      setResumeText(text);
+      toast.success(`Loaded ${file.name}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not read that file");
+    } finally {
+      setReading("");
+    }
   }
 
   async function onSubmit(e: React.FormEvent) {
