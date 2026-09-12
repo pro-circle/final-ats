@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Sparkles, Rocket, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { saveOnboarding } from "@/lib/profile.functions";
+import { extractTextFromFile, RESUME_ACCEPT } from "@/lib/file-text";
 
 export const Route = createFileRoute("/_app/candidate/onboarding")({
   head: () => ({
@@ -33,13 +34,22 @@ function OnboardingPage() {
   const [summary, setSummary] = useState("");
   const [resumeText, setResumeText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [reading, setReading] = useState("");
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
-    const text = await file.text();
-    setResumeText(text);
-    toast.success(`Loaded ${file.name}`);
+    setReading("Opening your file");
+    try {
+      const text = await extractTextFromFile(file, (stage) => setReading(stage));
+      setResumeText(text);
+      toast.success(`Loaded ${file.name}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not read that file");
+    } finally {
+      setReading("");
+    }
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -172,13 +182,13 @@ function OnboardingPage() {
         <div>
           <div className="mb-2 flex items-center justify-between">
             <span className="text-xs font-semibold text-foreground/80">
-              Resume (paste text or upload .txt / .md)
+              Resume (paste text or upload PDF / Word / .txt)
             </span>
             <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-border bg-surface px-2.5 py-1 text-[11px] font-semibold hover:bg-card">
-              <Wand2 className="size-3" /> Upload
+              <Wand2 className="size-3" /> {reading || "Upload"}
               <input
                 type="file"
-                accept=".txt,.md,text/plain"
+                accept={RESUME_ACCEPT}
                 onChange={onFile}
                 className="hidden"
               />
